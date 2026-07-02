@@ -1,0 +1,21 @@
+[package]
+name = "scheduler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# The Playback Scheduler consumes the Buffer Layer and Clock
+# Synchronization Engine only through their existing, unmodified public
+# APIs (`buffer::BufferManager`, `buffer::Synchronizer`), and the
+# Streaming Engine only for the shared `AudioPacket` type.
+buffer = { path = "../buffer" }
+streaming = { path = "../streaming" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+tracing = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "test-util"] }
+
+[[bench]]
+name = "scheduler_bench"
+harness = false

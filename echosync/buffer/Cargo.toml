@@ -1,0 +1,18 @@
+[package]
+name = "buffer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# The Buffer Layer consumes AudioPacket only through the Streaming
+# Engine's existing, unmodified public API.
+streaming = { path = "../streaming" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+tracing = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "test-util"] }
+
+[[bench]]
+name = "buffer_bench"
+harness = false
