@@ -5,6 +5,7 @@ import '../../shared/widgets/page_background.dart';
 import '../../shared/widgets/primary_button.dart';
 import 'widgets/home_header.dart';
 import 'widgets/recent_session_card.dart';
+import '../room/create_room_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -21,9 +22,16 @@ class HomeScreen extends StatelessWidget {
                 const HomeHeader(),
 
                 PrimaryButton(
-                  title: "Create Room",
-                  onTap: () {},
-                ),
+  title: "Create Room",
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CreateRoomScreen(),
+      ),
+    );
+  },
+),
 
                 const SizedBox(height: AppSpacing.md),
 
