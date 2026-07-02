@@ -1,0 +1,12 @@
+[package]
+name = "streaming"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+tracing = "0.1"
+
+[[bench]]
+name = "streaming_bench"
+harness = false
