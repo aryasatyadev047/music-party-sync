@@ -6,6 +6,7 @@ import '../../shared/widgets/primary_button.dart';
 import 'widgets/home_header.dart';
 import 'widgets/recent_session_card.dart';
 import '../room/create_room_screen.dart';
+import '../room/join_room_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -36,7 +37,14 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
 
                 OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const JoinRoomScreen(),
+    ),
+  );
+},
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(
                       double.infinity,

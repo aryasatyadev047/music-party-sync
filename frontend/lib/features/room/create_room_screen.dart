@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../discovery/discovery_screen.dart';
+import '../../core/services/room_service.dart';
+import '../../models/room.dart';
+import '../waiting_room/waiting_room_screen.dart';
 
 class CreateRoomScreen extends StatefulWidget {
   const CreateRoomScreen({super.key});
@@ -20,7 +22,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
     super.dispose();
   }
 
-  void createRoom() {
+  Future<void> createRoom() async {
     if (roomController.text.trim().isEmpty ||
         hostController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -31,12 +33,39 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const DiscoveryScreen(),
-      ),
-    );
+    try {
+      final Room room = await RoomService.createRoom(
+        roomController.text.trim(),
+        hostController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Room Created: ${room.roomId}",
+          ),
+        ),
+      );
+
+      Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (_) => WaitingRoomScreen(
+      room: room,
+    ),
+  ),
+);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    }
   }
 
   @override
@@ -55,18 +84,14 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                 labelText: "Room Name",
               ),
             ),
-
             const SizedBox(height: 20),
-
             TextField(
               controller: hostController,
               decoration: const InputDecoration(
                 labelText: "Host Name",
               ),
             ),
-
             const SizedBox(height: 30),
-
             ElevatedButton(
               onPressed: createRoom,
               child: const Text("Create Room"),

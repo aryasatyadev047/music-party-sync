@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_spacing.dart';
 import '../../core/constants/app_text_styles.dart';
+import '../../core/services/socket_service.dart';
+import '../../models/room.dart';
 import '../../shared/widgets/page_background.dart';
 import '../../shared/widgets/participant_tile.dart';
 import '../../shared/widgets/primary_button.dart';
@@ -9,11 +11,73 @@ import '../../shared/widgets/qr_card.dart';
 import '../../shared/widgets/room_info_card.dart';
 import '../player/player_screen.dart';
 
-class WaitingRoomScreen extends StatelessWidget {
-  const WaitingRoomScreen({super.key});
+class WaitingRoomScreen extends StatefulWidget {
+  final Room room;
+
+  const WaitingRoomScreen({
+    super.key,
+    required this.room,
+  });
+
+  @override
+  State<WaitingRoomScreen> createState() =>
+      _WaitingRoomScreenState();
+}
+
+class _WaitingRoomScreenState
+    extends State<WaitingRoomScreen> {
+
+  late Room room;
+
+  @override
+  void initState() {
+    super.initState();
+
+    room = widget.room;
+
+    SocketService.instance.connect();
+
+    SocketService.instance.joinRoom(room.roomId);
+
+    SocketService.instance.onRoomUpdated((data) {
+
+      final updatedRoom = Room.fromJson(data);
+
+      if (!mounted) return;
+
+      setState(() {
+        room = updatedRoom;
+      });
+
+    });
+
+    SocketService.instance.onPartyStarted((_) {
+
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const PlayerScreen(),
+        ),
+      );
+
+    });
+  }
+
+  @override
+  void dispose() {
+
+    SocketService.instance.leaveRoom(room.roomId);
+
+    SocketService.instance.dispose();
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       body: PageBackground(
         child: SafeArea(
@@ -27,18 +91,22 @@ class WaitingRoomScreen extends StatelessWidget {
                   style: AppTextStyles.heading,
                 ),
 
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(
+                  height: AppSpacing.lg,
+                ),
 
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
 
-                      final desktop = constraints.maxWidth > 900;
+                      final desktop =
+                          constraints.maxWidth > 900;
 
                       if (desktop) {
 
                         return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
                           children: [
 
                             Expanded(
@@ -46,9 +114,9 @@ class WaitingRoomScreen extends StatelessWidget {
                               child: Column(
                                 children: [
 
-                                  const RoomInfoCard(
-                                    roomName: "Saturday Party",
-                                    roomCode: "ABCD-1234",
+                                  RoomInfoCard(
+                                    roomName: room.roomName,
+                                    roomCode: room.roomId,
                                   ),
 
                                   const SizedBox(
@@ -74,63 +142,57 @@ class WaitingRoomScreen extends StatelessWidget {
 
                                   Text(
                                     "Participants",
-                                    style: AppTextStyles.title,
+                                    style:
+                                        AppTextStyles.title,
                                   ),
 
                                   const SizedBox(
-                                    height: AppSpacing.md,
+                                    height:
+                                        AppSpacing.md,
                                   ),
 
                                   Expanded(
                                     child: ListView(
-                                      children: const [
-                                                                                ParticipantTile(
-                                          name: "Satyadev",
-                                          isHost: true,
-                                        ),
-
-                                        SizedBox(
-                                          height: AppSpacing.md,
-                                        ),
-
-                                        ParticipantTile(
-                                          name: "Rahul",
-                                        ),
-
-                                        SizedBox(
-                                          height: AppSpacing.md,
-                                        ),
-
-                                        ParticipantTile(
-                                          name: "Aman",
-                                        ),
-
-                                        SizedBox(
-                                          height: AppSpacing.md,
-                                        ),
-
-                                        ParticipantTile(
-                                          name: "Riya",
-                                        ),
-                                      ],
+                                      children:
+                                          room.members
+                                              .map(
+                                                (member) =>
+                                                    Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                    bottom:
+                                                        AppSpacing.md,
+                                                  ),
+                                                  child:
+                                                      ParticipantTile(
+                                                    name:
+                                                        member.name,
+                                                    isHost:
+                                                        member.host,
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(),
                                     ),
                                   ),
 
                                   const SizedBox(
-                                    height: AppSpacing.lg,
+                                    height:
+                                        AppSpacing.lg,
                                   ),
 
                                   PrimaryButton(
-  title: "Start Party",
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const PlayerScreen(),
-      ),
-    );
-  },
-),
+                                    title:
+                                        "Start Party",
+                                    onTap: () {
+
+                                      SocketService
+                                          .instance
+                                          .startParty(
+                                              room.roomId);
+
+                                    },
+                                  ),
                                 ],
                               ),
                             ),
@@ -138,13 +200,14 @@ class WaitingRoomScreen extends StatelessWidget {
                         );
                       }
 
-                      return SingleChildScrollView(
+                      // ===== CONTINUE IN PART 2 =====
+                                            return SingleChildScrollView(
                         child: Column(
                           children: [
 
-                            const RoomInfoCard(
-                              roomName: "Saturday Party",
-                              roomCode: "ABCD-1234",
+                            RoomInfoCard(
+                              roomName: room.roomName,
+                              roomCode: room.roomId,
                             ),
 
                             const SizedBox(
@@ -169,33 +232,16 @@ class WaitingRoomScreen extends StatelessWidget {
                               height: AppSpacing.md,
                             ),
 
-                            const ParticipantTile(
-                              name: "Satyadev",
-                              isHost: true,
-                            ),
-
-                            const SizedBox(
-                              height: AppSpacing.md,
-                            ),
-
-                            const ParticipantTile(
-                              name: "Rahul",
-                            ),
-
-                            const SizedBox(
-                              height: AppSpacing.md,
-                            ),
-
-                            const ParticipantTile(
-                              name: "Aman",
-                            ),
-
-                            const SizedBox(
-                              height: AppSpacing.md,
-                            ),
-
-                            const ParticipantTile(
-                              name: "Riya",
+                            ...room.members.map(
+                              (member) => Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: AppSpacing.md,
+                                ),
+                                child: ParticipantTile(
+                                  name: member.name,
+                                  isHost: member.host,
+                                ),
+                              ),
                             ),
 
                             const SizedBox(
@@ -204,7 +250,10 @@ class WaitingRoomScreen extends StatelessWidget {
 
                             PrimaryButton(
                               title: "Start Party",
-                              onTap: () {},
+                              onTap: () {
+                                SocketService.instance
+                                    .startParty(room.roomId);
+                              },
                             ),
                           ],
                         ),

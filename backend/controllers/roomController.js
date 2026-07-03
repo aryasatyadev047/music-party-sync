@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require("uuid");
+const { getIO } = require("../services/socketService");
 
 // Temporary in-memory storage
 const rooms = {};
@@ -39,10 +40,28 @@ const joinRoom = (req, res) => {
     });
   }
 
-  room.members.push({
-    name: userName,
-    host: false,
-  });
+  // Prevent duplicate names
+  const exists = room.members.find(
+    (member) => member.name === userName,
+  );
+
+  if (!exists) {
+    room.members.push({
+      name: userName,
+      host: false,
+    });
+  }
+
+  // Broadcast updated room to everyone connected
+  try {
+    const io = getIO();
+
+    io.to(roomId).emit("room-updated", room);
+
+    console.log(`📢 Room Updated: ${roomId}`);
+  } catch (err) {
+    console.log("Socket not initialized yet.");
+  }
 
   res.json({
     success: true,
